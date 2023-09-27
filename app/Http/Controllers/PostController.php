@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class PostController extends Controller
 {
@@ -12,7 +13,7 @@ class PostController extends Controller
      */
     public function index()
     {
-        $posts = Post::get();
+        $posts = Post::orderBy('created_at', 'desc')->get();
         return view('posts.index', compact('posts'));
     }
 
@@ -29,6 +30,15 @@ class PostController extends Controller
      */
     public function store(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|unique:posts,title',
+            'content' => 'required|unique:posts,content',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('post.create')->withErrors($validator)->withInput()->with('error', 'Cannot publish post');
+        }
+
         Post::create([
             'title' => $request->input('title'),
             'content' => $request->input('content'),
